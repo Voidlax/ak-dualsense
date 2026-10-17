@@ -1,0 +1,5 @@
+build/
+dist/
+install.py
+script/HapticsProbeScript.cs
+*.log

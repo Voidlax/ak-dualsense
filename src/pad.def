@@ -1,0 +1,15 @@
+LIBRARY libScePad_x64
+EXPORTS
+    scePadClose @1
+    scePadGetControllerInformation @2
+    scePadInit @3
+    scePadOpen @4
+    scePadRead @5
+    scePadReadState @6
+    scePadResetLightBar @7
+    scePadResetOrientation @8
+    scePadSetAngularVelocityDeadbandState @9
+    scePadSetLightBar @10
+    scePadSetMotionSensorState @11
+    scePadSetTiltCorrectionState @12
+    scePadSetVibration @13
