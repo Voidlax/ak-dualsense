@@ -52,18 +52,5 @@ New-Item -ItemType Directory -Force $scripts | Out-Null
 Copy-Item (Join-Path $here "BmGame\Scripts\DualSenseScript.cs") $scripts -Force
 Write-Host "dll and script installed"
 
-$loc = Join-Path $GameDir "BmGame\Localization\INT\PC.Int"
-if (Test-Path $loc) {
-    $text = [System.IO.File]::ReadAllText($loc, [System.Text.Encoding]::Unicode)
-    $new = $text.Replace("PursuitX={PAD_X} Brake / Reverse", "PursuitX={PAD_LT} Brake / Reverse")
-    $new = $new.Replace("PursuitX_BMT={PAD_X} Brake", "PursuitX_BMT={PAD_LT} Brake / Reverse")
-    $new = $new.Replace("PursuitL2_BMT=Reverse {PAD_LT}", "PursuitL2_BMT=")
-    if ($new -ne $text) {
-        if (-not (Test-Path "$loc.original")) { Copy-Item $loc "$loc.original" }
-        [System.IO.File]::WriteAllText($loc, $new, [System.Text.Encoding]::Unicode)
-        Write-Host "batmobile brake prompt now shows L2"
-    }
-}
-
 Write-Host ""
 Write-Host "done. last thing: in steam go to arkham knight > properties > controller and set it to 'disable steam input'"

@@ -22,7 +22,6 @@ public class DualSenseScript : Script
     [DllImport(Pad)] static extern void ds_Haptic(int kind, float strength);
     [DllImport(Pad)] static extern void ds_Engine(float rpm, float load);
     [DllImport(Pad)] static extern void ds_GyroAim(int on);
-    [DllImport(Pad)] static extern void ds_BrakeOnL2(int on);
     [DllImport(Pad)] static extern void ds_Lightbar(int r, int g, int b);
     [DllImport(Pad)] static extern void ds_LightbarRelease();
     [DllImport(Pad)] static extern void ds_PlayerLedBar(float fill);
@@ -37,7 +36,6 @@ public class DualSenseScript : Script
     static double s_firingSince;
     static bool s_broken;
     static double s_hitUntil;
-    static bool s_toggleChecked;
     static readonly System.Diagnostics.Stopwatch s_clock = System.Diagnostics.Stopwatch.StartNew();
 
     string _leftNow = "";
@@ -46,7 +44,6 @@ public class DualSenseScript : Script
     double _nextShot;
     double _lastTick;
     int _lr = -1, _lg = -1, _lb = -1;
-    bool _lastToggle = true;
     int _errors;
 
     public override void Main() => Startup();
@@ -119,7 +116,6 @@ public class DualSenseScript : Script
         SetRight("off", () => ds_TriggerOff(Right));
         ds_Engine(0, 0);
         ds_GyroAim(0);
-        ds_BrakeOnL2(0);
         if (_lr != -1)
         {
             ds_LightbarRelease();
@@ -284,8 +280,7 @@ public class DualSenseScript : Script
             SetRight("off", () => ds_TriggerOff(Right));
             ds_Engine(0, 0);
             ds_GyroAim(0);
-            ds_BrakeOnL2(0);
-            var c = BaseColor(pc);
+                var c = BaseColor(pc);
             Light(c[0] * 0.3f, c[1] * 0.3f, c[2] * 0.3f);
             ds_PlayerLeds(4);
             return;
@@ -308,17 +303,6 @@ public class DualSenseScript : Script
 
     void Driving(RPlayerController pc, RVehicleBatmobileBase bm)
     {
-        if (_lastMode != "batmobile pursuit" && _lastMode != "batmobile battle" && _lastMode != "batmobile remote")
-            s_toggleChecked = false;
-        if (!s_toggleChecked)
-        {
-            s_toggleChecked = true;
-            if (pc.PlayerInput is RPlayerInput input && !input.bBatmobileBattleModeToggle)
-            {
-                pc.FE_SetBattleModeToggle(true);
-                pc.SetBattleModeKeyBinds();
-            }
-        }
         bool battle = bm.IsInBattleMode();
         // float max = bm.MaxSpeed > 1 ? bm.MaxSpeed : 3000;
         float max = 2400;
@@ -336,12 +320,6 @@ public class DualSenseScript : Script
             SetMode(bm.bRemoteDrive ? "batmobile remote" : "batmobile pursuit");
             ds_GyroAim(0);
             bool toggle = pc.PlayerInput is RPlayerInput pin && pin.bBatmobileBattleModeToggle;
-            if (toggle != _lastToggle)
-            {
-                _lastToggle = toggle;
-                ds_Log(toggle ? "battle mode on R1, L2 is the brake" : "battle mode on L2 hold, L2 left alone");
-            }
-            ds_BrakeOnL2(toggle ? 1 : 0);
             ds_PlayerLedBar(Clamp01(bm.GetBoostPct()));
             ds_Engine(boost ? 1 : 0.1f + rpm * 0.9f, boost ? 0.7f : gas * (0.25f + rpm * 0.45f));
             if (hp < 0.3f)
@@ -362,7 +340,9 @@ public class DualSenseScript : Script
                 SetRight("drive" + level, () => ds_TriggerSlope(Right, 1, 8, 1, level));
             }
             float brake = Clamp01(-bm.Throttle);
-            if (brake > 0.5f && bm.ForwardVel > max * 0.3f)
+            if (!toggle)
+                SetLeft("battlehold", () => ds_TriggerFeedback(Left, 3, 2));
+            else if (brake > 0.5f && bm.ForwardVel > max * 0.3f)
                 SetLeft("abs", () => ds_TriggerVibration(Left, 2, 2, 28));
             else
                 SetLeft("brake", () => ds_TriggerSlope(Left, 1, 8, 1, 3));
@@ -371,7 +351,6 @@ public class DualSenseScript : Script
 
         SetMode("batmobile battle");
         ds_GyroAim(1);
-        ds_BrakeOnL2(0);
         ds_Engine(0.05f + rpm * 0.5f, 0.05f + speed * 0.2f);
         SetLeft("off", () => ds_TriggerOff(Left));
 
@@ -415,7 +394,6 @@ public class DualSenseScript : Script
     void OnFoot(RPlayerController pc)
     {
         ds_Engine(0, 0);
-        ds_BrakeOnL2(0);
         ds_AudioHaptics(0);
         RInventoryGadget gadget = null;
         try

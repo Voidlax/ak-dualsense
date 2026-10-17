@@ -12,7 +12,7 @@ the game only ever supported the original ds4 (wired, static red light bar, norm
 ## what it does
 
 **adaptive triggers**
-- batmobile: R2 gets heavier the faster you go, goes loose when you're in the air, vibrates while boosting. L2 is brake / reverse (like every other driving game) with a pedal feel and an abs shudder when you brake hard
+- batmobile: R2 gets heavier the faster you go, goes loose when you're in the air, vibrates while boosting. L2 follows whatever it does in your control scheme: a light pull when it's the battle mode button, a brake pedal feel with an abs shudder when it's reverse
 - battle mode: 60mm cannon has a gun click, the vulcan gun rattles, missiles feel like pulling a bow, emp buzzes, R2 locks up when the vulcan overheats
 - on foot: L2 has a light pull when you aim, R2 changes per gadget (batarang, batclaw, line launcher, rec, gel, disruptor, remote hacking device...)
 
@@ -50,9 +50,7 @@ the game only ever supported the original ds4 (wired, static red light bar, norm
 4. in steam: arkham knight > properties > controller > **disable steam input**
 5. play
 
-the first time you get in the batmobile the script switches battle mode to the R1 toggle (it's the game's own option), so L2 can be the brake. you can change it back in the controls menu if you want L2 for battle mode.
-
-if the button prompts show xbox buttons get a ps icons mod, [Dualshock 4 Controller Icons](https://www.nexusmods.com/batmanarkhamknight/mods/3001) works fine with this. the installer changes the batmobile brake prompt to L2.
+if the button prompts show xbox buttons get a ps icons mod, [Dualshock 4 Controller Icons](https://www.nexusmods.com/batmanarkhamknight/mods/3001) works fine with this.
 
 `uninstall.bat` puts the original files back.
 

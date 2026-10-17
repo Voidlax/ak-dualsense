@@ -47,7 +47,6 @@ static_assert(offsetof(ScePadData, connected_count) == 0x68, "count offset");
 Config cfg;
 volatile int gyro_enabled = 1;
 volatile int gyro_script = 0;
-volatile int l2_brake = 0;
 static int swipe_down = 0, swipe_done = 0, swipe_x = 0, swipe_y = 0, swipe_btn = 0;
 static ULONGLONG swipe_start = 0, swipe_until = 0;
 volatile int light_override = 0;
@@ -340,12 +339,6 @@ __declspec(dllexport) int scePadReadState(int handle, ScePadData *data)
     data->l2 = in.l2;
     data->r2 = in.r2;
     apply_gyro(data, &in);
-    if (l2_brake) {
-        if (in.l2 > 50)
-            data->buttons |= 0x8000;
-        data->buttons &= ~0x100u;
-        data->l2 = 0;
-    }
     int n = 0;
     for (int i = 0; i < 2; i++) {
         if (!in.touch_on[i])
@@ -681,11 +674,6 @@ __declspec(dllexport) void ds_AudioHaptics(float level)
     haptics_audio_gate(level);
 }
 
-__declspec(dllexport) void ds_BrakeOnL2(int on)
-{
-    l2_brake = on ? 1 : 0;
-}
-
 __declspec(dllexport) void ds_GyroAim(int on)
 {
     gyro_script = on ? 1 : 0;
@@ -801,7 +789,6 @@ void script_watchdog(void)
     LeaveCriticalSection(&lock);
     haptics_engine(0, 0);
     gyro_script = 0;
-    l2_brake = 0;
     if (cfg.verbose)
         log_msg("script went quiet, triggers released");
 }
