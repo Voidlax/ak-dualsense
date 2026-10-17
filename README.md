@@ -6,8 +6,8 @@ the game only ever supported the original ds4 (wired, static red light bar, norm
 
 ## notice
 
-1. its vibecoded. at first i built it for myself to have a better experience with a first playthrough of the game, but i eventually decided to publish it. if someone doesn't like the fact that it's vibecoded they shouldn't use it
-2. contributions are strongly advised as the hands-on testing i've done is minimal and i'm still at the beginning of the game, plus the project is open source. all i ask is for some credit if used elsewhere.
+1. it's vibecoded. at first i built it for myself to have a better experience on my first playthrough of the game, but i eventually decided to publish it. if someone doesn't like the fact that it's vibecoded they shouldn't use it.
+2. contributions are strongly encouraged as the hands-on testing i've done is minimal and i'm still at the beginning of the game, plus the project is open source. all i ask is some credit if used elsewhere.
 
 ## what it does
 
@@ -92,6 +92,7 @@ needs visual studio 2022 build tools (c++ workload). run `build.bat`, the dll en
 - [SAxense](https://github.com/egormanga/SAxense) by egormanga for figuring out the bluetooth haptics report, without it there's no haptics over bluetooth
 - [BmSDK](https://github.com/Team-BmSDK/BmSDK-AK) for making scripting this game possible
 - linux's hid-playstation driver and [dualsensectl](https://github.com/nowrep/dualsensectl) for documenting the dualsense reports and trigger effects
+- claude for being a good boy <3
 
 ## license
 
