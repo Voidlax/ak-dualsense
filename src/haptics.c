@@ -265,8 +265,8 @@ void haptics_fill(signed char *out, int frames)
                 v->on = 0;
         }
 
-        l = tanhf(l * vol * 2.2f);
-        r = tanhf(r * vol * 2.2f);
+        l = tanhf(l * vol * 1.6f);
+        r = tanhf(r * vol * 1.6f);
         int a = (int)(l * 127.0f);
         int b = (int)(r * 127.0f);
         if (a > 127) a = 127;

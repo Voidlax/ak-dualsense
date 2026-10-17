@@ -46,6 +46,7 @@ public class DualSenseScript : Script
     double _nextShot;
     double _lastTick;
     int _lr = -1, _lg = -1, _lb = -1;
+    bool _lastToggle = true;
     int _errors;
 
     public override void Main() => Startup();
@@ -307,13 +308,15 @@ public class DualSenseScript : Script
 
     void Driving(RPlayerController pc, RVehicleBatmobileBase bm)
     {
+        if (_lastMode != "batmobile pursuit" && _lastMode != "batmobile battle" && _lastMode != "batmobile remote")
+            s_toggleChecked = false;
         if (!s_toggleChecked)
         {
             s_toggleChecked = true;
             if (pc.PlayerInput is RPlayerInput input && !input.bBatmobileBattleModeToggle)
             {
                 pc.FE_SetBattleModeToggle(true);
-                ds_Log("battle mode moved to the R1 toggle so L2 can brake");
+                pc.SetBattleModeKeyBinds();
             }
         }
         bool battle = bm.IsInBattleMode();
@@ -325,15 +328,22 @@ public class DualSenseScript : Script
         float gas = Clamp01(Math.Abs(bm.Throttle));
         bool boost = bm is RVehicleBatmobile car && car.bAfterburnerIsOn;
 
-        ds_AudioHaptics(0.7f);
+        // ds_AudioHaptics(0.7f);
+        ds_AudioHaptics(0);
 
         if (!battle)
         {
             SetMode(bm.bRemoteDrive ? "batmobile remote" : "batmobile pursuit");
             ds_GyroAim(0);
-            ds_BrakeOnL2(1);
+            bool toggle = pc.PlayerInput is RPlayerInput pin && pin.bBatmobileBattleModeToggle;
+            if (toggle != _lastToggle)
+            {
+                _lastToggle = toggle;
+                ds_Log(toggle ? "battle mode on R1, L2 is the brake" : "battle mode on L2 hold, L2 left alone");
+            }
+            ds_BrakeOnL2(toggle ? 1 : 0);
             ds_PlayerLedBar(Clamp01(bm.GetBoostPct()));
-            ds_Engine(boost ? 1 : 0.1f + rpm * 0.9f, boost ? 1 : gas * (0.35f + rpm * 0.65f));
+            ds_Engine(boost ? 1 : 0.1f + rpm * 0.9f, boost ? 0.7f : gas * (0.25f + rpm * 0.45f));
             if (hp < 0.3f)
                 Light(255 * Pulse(5), 0, 0);
             else if (boost)
@@ -343,26 +353,26 @@ public class DualSenseScript : Script
             else
                 Light(0, 50 + speed * 40, 255);
             if (boost)
-                SetRight("boost", () => ds_TriggerVibration(Right, 1, 7, 45));
+                SetRight("boost", () => ds_TriggerVibration(Right, 1, 4, 40));
             else if (bm.AirborneTime > 0.25f)
                 SetRight("air", () => ds_TriggerFeedback(Right, 0, 1));
             else
             {
-                int level = 2 + (int)(speed * 4);
+                int level = 1 + (int)(speed * 3.5f);
                 SetRight("drive" + level, () => ds_TriggerSlope(Right, 1, 8, 1, level));
             }
             float brake = Clamp01(-bm.Throttle);
             if (brake > 0.5f && bm.ForwardVel > max * 0.3f)
-                SetLeft("abs", () => ds_TriggerVibration(Left, 2, 3, 28));
+                SetLeft("abs", () => ds_TriggerVibration(Left, 2, 2, 28));
             else
-                SetLeft("brake", () => ds_TriggerSlope(Left, 1, 8, 1, 4));
+                SetLeft("brake", () => ds_TriggerSlope(Left, 1, 8, 1, 3));
             return;
         }
 
         SetMode("batmobile battle");
         ds_GyroAim(1);
         ds_BrakeOnL2(0);
-        ds_Engine(0.05f + rpm * 0.5f, 0.1f + speed * 0.3f);
+        ds_Engine(0.05f + rpm * 0.5f, 0.05f + speed * 0.2f);
         SetLeft("off", () => ds_TriggerOff(Left));
 
         var wpn = bm.CurrentWeapon;
@@ -383,23 +393,23 @@ public class DualSenseScript : Script
         if (wpn is RBatmobileCannon gun)
         {
             if (gun.bOverheating)
-                SetRight("overheat", () => ds_TriggerFeedback(Right, 1, 8));
+                SetRight("overheat", () => ds_TriggerFeedback(Right, 1, 6));
             else
-                SetRight("vulcan", () => ds_TriggerMachine(Right, 1, 9, 6, 4, 18, 2));
+                SetRight("vulcan", () => ds_TriggerMachine(Right, 1, 9, 4, 2, 18, 2));
             if (s_firing && !gun.bOverheating && s_clock.Elapsed.TotalSeconds >= _nextShot)
             {
                 _nextShot = s_clock.Elapsed.TotalSeconds + 0.075;
-                ds_Haptic(5, 0.55f);
+                ds_Haptic(5, 0.35f);
             }
         }
         else if (wpn is RBatmobileHeavyCannon)
-            SetRight("cannon", () => ds_TriggerWeapon(Right, 3, 6, 8));
+            SetRight("cannon", () => ds_TriggerWeapon(Right, 3, 6, 6));
         else if (wpn is RBatmobileMissileLauncher)
-            SetRight("missiles", () => ds_TriggerBow(Right, 1, 7, 6, 8));
+            SetRight("missiles", () => ds_TriggerBow(Right, 1, 7, 4, 6));
         else if (wpn is RBatmobileEMP)
-            SetRight("emp", () => ds_TriggerVibration(Right, 2, 5, 70));
+            SetRight("emp", () => ds_TriggerVibration(Right, 2, 3, 70));
         else
-            SetRight("battle", () => ds_TriggerWeapon(Right, 3, 6, 6));
+            SetRight("battle", () => ds_TriggerWeapon(Right, 3, 6, 5));
     }
 
     void OnFoot(RPlayerController pc)
@@ -429,26 +439,26 @@ public class DualSenseScript : Script
         string name = gadget == null ? "none" : gadget.Class.Name;
         SetMode("aiming " + name);
         ds_GyroAim(1);
-        SetLeft("aim", () => ds_TriggerFeedback(Left, 1, 2));
+        SetLeft("aim", () => ds_TriggerFeedback(Left, 1, 1));
 
         if (gadget is RBatarang)
-            SetRight("batarang", () => ds_TriggerWeapon(Right, 2, 5, 4));
+            SetRight("batarang", () => ds_TriggerWeapon(Right, 2, 5, 3));
         else if (gadget is RHarpoonGun)
-            SetRight("batclaw", () => ds_TriggerBow(Right, 1, 6, 5, 7));
+            SetRight("batclaw", () => ds_TriggerBow(Right, 1, 6, 3, 5));
         else if (gadget is RLineLauncher)
-            SetRight("line", () => ds_TriggerSlope(Right, 1, 6, 1, 5));
+            SetRight("line", () => ds_TriggerSlope(Right, 1, 6, 1, 3));
         else if (gadget is RMagneticBlast)
-            SetRight("rec", () => ds_TriggerWeapon(Right, 4, 7, 7));
+            SetRight("rec", () => ds_TriggerWeapon(Right, 4, 7, 5));
         else if (gadget is RGooSpray)
-            SetRight("gel", () => ds_TriggerGalloping(Right, 1, 8, 2, 5, 6));
+            SetRight("gel", () => ds_TriggerGalloping(Right, 1, 8, 2, 5, 5));
         else if (gadget is RDisruptorSniper)
-            SetRight("disruptor", () => ds_TriggerWeapon(Right, 5, 7, 8));
+            SetRight("disruptor", () => ds_TriggerWeapon(Right, 5, 7, 6));
         else if (gadget is RRHD)
-            SetRight("rhd", () => ds_TriggerVibration(Right, 2, 3, 90));
+            SetRight("rhd", () => ds_TriggerVibration(Right, 2, 2, 90));
         else if (gadget is RGrappleGun)
-            SetRight("grapple", () => ds_TriggerWeapon(Right, 2, 4, 3));
+            SetRight("grapple", () => ds_TriggerWeapon(Right, 2, 4, 2));
         else
-            SetRight("gadget", () => ds_TriggerWeapon(Right, 3, 6, 5));
+            SetRight("gadget", () => ds_TriggerWeapon(Right, 3, 6, 4));
     }
 
     static void Safe(Action a)
@@ -467,7 +477,7 @@ public class DualSenseScript : Script
     {
         var fired = self.FireWeapon();
         if (fired)
-            Safe(() => ds_Haptic(2, 0.8f));
+            Safe(() => ds_Haptic(2, 0.6f));
         return fired;
     }
 
@@ -475,7 +485,7 @@ public class DualSenseScript : Script
     static void MissilesFired(RBatmobileMissileLauncher self)
     {
         self.FireMissilesNow();
-        Safe(() => ds_Haptic(11, 0.7f));
+        Safe(() => ds_Haptic(11, 0.5f));
     }
 
     [Redirect(typeof(RBatmobileEMP), nameof(RBatmobileEMP.FireWeapon))]
@@ -483,7 +493,7 @@ public class DualSenseScript : Script
     {
         var fired = self.FireWeapon();
         if (fired)
-            Safe(() => ds_Haptic(4, 0.9f));
+            Safe(() => ds_Haptic(4, 0.6f));
         return fired;
     }
 
@@ -506,14 +516,14 @@ public class DualSenseScript : Script
     static void BoostOn(RVehicleBatmobile self, bool front, bool sideBurst)
     {
         self.AfterburnerOn(front, sideBurst);
-        Safe(() => ds_Haptic(2, 0.6f));
+        Safe(() => ds_Haptic(2, 0.45f));
     }
 
     [Redirect(typeof(RVehicleBatmobileBase), nameof(RVehicleBatmobileBase.BattleDodge))]
     static void Dodged(RVehicleBatmobileBase self, Vector3 direction)
     {
         self.BattleDodge(direction);
-        Safe(() => ds_Haptic(1, 0.7f));
+        Safe(() => ds_Haptic(1, 0.5f));
     }
 
     [Redirect(typeof(RVehicleBatmobileBase), nameof(RVehicleBatmobileBase.TakeDamage))]
@@ -524,7 +534,7 @@ public class DualSenseScript : Script
         if (damage > 0)
         {
             s_hitUntil = s_clock.Elapsed.TotalSeconds + 0.15;
-            Safe(() => ds_Haptic(HitSide(self, hitLocation), Math.Min(1.0f, 0.4f + damage / 60.0f)));
+            Safe(() => ds_Haptic(HitSide(self, hitLocation), Math.Min(0.8f, 0.3f + damage / 80.0f)));
         }
     }
 
@@ -536,7 +546,7 @@ public class DualSenseScript : Script
         if (damage > 0)
             s_hitUntil = s_clock.Elapsed.TotalSeconds + 0.15;
         if (damage > 0)
-            Safe(() => ds_Haptic(self.CombatPawn != null ? HitSide(self.CombatPawn, hitLocation) : 1, Math.Min(1.0f, 0.4f + damage / 40.0f)));
+            Safe(() => ds_Haptic(self.CombatPawn != null ? HitSide(self.CombatPawn, hitLocation) : 1, Math.Min(0.8f, 0.3f + damage / 50.0f)));
     }
 
     static int HitSide(Actor victim, Vector3 hitLocation)
@@ -563,20 +573,20 @@ public class DualSenseScript : Script
     static void GadgetUsed(RInventoryGadget self)
     {
         self.GadgetUsed();
-        Safe(() => ds_Haptic(0, 0.8f));
+        Safe(() => ds_Haptic(0, 0.5f));
     }
 
     [Redirect(typeof(RInventoryGadget), nameof(RInventoryGadget.ThrowGadget))]
     static void GadgetThrown(RInventoryGadget self, Vector3 from, RBMAIController.BRAECReactionType type, int launchId)
     {
         self.ThrowGadget(from, type, launchId);
-        Safe(() => ds_Haptic(10, 0.8f));
+        Safe(() => ds_Haptic(10, 0.5f));
     }
 
     [Redirect(typeof(RPlayerController), nameof(RPlayerController.StartGrappleBoost))]
     static void GrappleBoost(RPlayerController self)
     {
         self.StartGrappleBoost();
-        Safe(() => ds_Haptic(8, 0.8f));
+        Safe(() => ds_Haptic(8, 0.5f));
     }
 }

@@ -15,7 +15,6 @@ the game only ever supported the original ds4 (wired, static red light bar, norm
 - the game's rumble gets turned into proper haptics instead of the controller's fake rumble
 - extra effects for cannon shots, missiles, emp, boost, dodges, grapple boost, gadget throws and getting hit (it hits on the left or right side depending on where it came from)
 - engine feel in the batmobile that follows the rpm
-- optional: game audio into the haptics while driving (`audio_haptics=1`, off by default)
 
 **light bar**
 - character colour (batman, robin, nightwing, catwoman, azrael, red hood, harley, batgirl)
@@ -58,9 +57,10 @@ if the button prompts show xbox buttons get a ps icons mod, [Dualshock 4 Control
 
 | setting | what |
 | --- | --- |
+| `intensity` | `soft`, `normal` or `strong`. the quick way to make everything lighter or heavier, normal is the default |
 | `rumble` | `hd` = haptics over bluetooth, `classic` = the controller's own rumble emulation |
-| `rumble_strength` / `haptics_volume` | 0-200 |
-| `triggers` / `trigger_strength` | 1/0, 0-100 |
+| `rumble_strength` / `haptics_volume` | 0-200, on top of `intensity` |
+| `triggers` / `trigger_strength` | 1/0, 0-150 on top of `intensity` |
 | `lightbar_brightness` | 0-100 |
 | `player_leds` | 1/0 |
 | `gyro` | `off`, `l2` (while aiming), `always` |
@@ -68,7 +68,6 @@ if the button prompts show xbox buttons get a ps icons mod, [Dualshock 4 Control
 | `gyro_invert_x` / `gyro_invert_y` | 1 to invert |
 | `gyro_anti_deadzone` | % pushed past the game's stick deadzone |
 | `mute_toggles_gyro` | 1/0 |
-| `audio_haptics` / `audio_haptics_gain` | game audio into the haptics while driving |
 | `touch_swipes` | 1/0 |
 | `battery_on_connect` / `low_battery_warning` | 1/0 |
 | `verbose_log` | logs more stuff to `ak_dualsense.log` |

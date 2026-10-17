@@ -350,6 +350,14 @@ static int write_report(const unsigned char *data, int len)
     return ok;
 }
 
+static int scale_level(int s, float k)
+{
+    s = (int)((s + 1) * k + 0.5f) - 1;
+    if (s < 0) s = 0;
+    if (s > 7) s = 7;
+    return s;
+}
+
 static void scale_trigger(unsigned char *dst, const unsigned char *src)
 {
     memcpy(dst, src, 11);
@@ -362,16 +370,14 @@ static void scale_trigger(unsigned char *dst, const unsigned char *src)
         dst[0] = 0x05;
         return;
     }
-    if (cfg.trigger_strength >= 100)
+    if (cfg.trigger_strength == 100)
         return;
     float k = cfg.trigger_strength / 100.0f;
     if (dst[0] == 0x21 || dst[0] == 0x26) {
         unsigned int packed = dst[3] | (dst[4] << 8) | (dst[5] << 16) | (dst[6] << 24);
         unsigned int out = 0;
         for (int i = 0; i < 10; i++) {
-            int s = (packed >> (i * 3)) & 7;
-            s = (int)((s + 1) * k + 0.5f) - 1;
-            if (s < 0) s = 0;
+            int s = scale_level((packed >> (i * 3)) & 7, k);
             out |= (unsigned int)s << (i * 3);
         }
         dst[3] = out & 0xFF;
@@ -379,8 +385,11 @@ static void scale_trigger(unsigned char *dst, const unsigned char *src)
         dst[5] = (out >> 16) & 0xFF;
         dst[6] = (out >> 24) & 0xFF;
     } else if (dst[0] == 0x25) {
-        int s = (int)((dst[3] + 1) * k + 0.5f) - 1;
-        dst[3] = (unsigned char)(s < 0 ? 0 : s);
+        dst[3] = (unsigned char)scale_level(dst[3] & 7, k);
+    } else if (dst[0] == 0x22 || dst[0] == 0x27) {
+        int a = scale_level(dst[3] & 7, k);
+        int b = scale_level((dst[3] >> 3) & 7, k);
+        dst[3] = (unsigned char)(a | (b << 3));
     }
 }
 

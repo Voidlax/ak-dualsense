@@ -87,6 +87,7 @@ void log_msg(const char *fmt, ...)
 static const char *default_ini =
     "[dualsense]\r\n"
     "rumble=hd\r\n"
+    "intensity=normal\r\n"
     "rumble_strength=100\r\n"
     "haptics_volume=100\r\n"
     "triggers=1\r\n"
@@ -175,7 +176,16 @@ static void load_config(void)
     if (cfg.haptics_volume < 0) cfg.haptics_volume = 0;
     if (cfg.haptics_volume > 200) cfg.haptics_volume = 200;
     if (cfg.trigger_strength < 0) cfg.trigger_strength = 0;
-    if (cfg.trigger_strength > 100) cfg.trigger_strength = 100;
+    if (cfg.trigger_strength > 150) cfg.trigger_strength = 150;
+    GetPrivateProfileStringW(L"dualsense", L"intensity", L"normal", buf, 64, path);
+    int preset = 100;
+    if (_wcsicmp(buf, L"soft") == 0)
+        preset = 60;
+    else if (_wcsicmp(buf, L"strong") == 0)
+        preset = 140;
+    cfg.haptics_volume = cfg.haptics_volume * preset / 100;
+    cfg.trigger_strength = cfg.trigger_strength * preset / 100;
+    if (cfg.trigger_strength > 150) cfg.trigger_strength = 150;
     if (cfg.lightbar_brightness < 0) cfg.lightbar_brightness = 0;
     if (cfg.lightbar_brightness > 100) cfg.lightbar_brightness = 100;
     if (cfg.gyro_anti_deadzone < 0) cfg.gyro_anti_deadzone = 0;
@@ -192,7 +202,8 @@ static void setup(void)
     swprintf_s(path, MAX_PATH, L"%s\\ak_dualsense.log", base_dir);
     log_file = _wfopen(path, L"w");
     load_config();
-    log_msg("ak dualsense starting, rumble %s, gyro mode %d", cfg.rumble_hd ? "hd" : "classic", cfg.gyro_mode);
+    log_msg("ak dualsense starting, rumble %s, haptics %d%%, triggers %d%%, gyro mode %d", cfg.rumble_hd ? "hd" : "classic",
+            cfg.haptics_volume, cfg.trigger_strength, cfg.gyro_mode);
     EnterCriticalSection(&lock);
     memset(&pad_out, 0, sizeof(pad_out));
     pad_out.trig_l[0] = 0x05;
