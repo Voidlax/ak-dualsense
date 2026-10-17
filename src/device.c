@@ -628,6 +628,8 @@ void device_reset_now(void)
         r[3] = 0x02 | 0x04 | 0x08;
         r[3 + 10] = 0x05;
         r[3 + 21] = 0x05;
+        r[3 + 1] = 0x01 | 0x04 | 0x10;
+        r[3 + 43] = 0x20;
         if (vibration_v2)
             r[3 + 38] = 0x04;
         else
@@ -639,6 +641,8 @@ void device_reset_now(void)
         r[1] = 0x02 | 0x04 | 0x08;
         r[1 + 10] = 0x05;
         r[1 + 21] = 0x05;
+        r[1 + 1] = 0x01 | 0x04 | 0x10;
+        r[1 + 43] = 0x20;
         if (vibration_v2)
             r[1 + 38] = 0x04;
         else
